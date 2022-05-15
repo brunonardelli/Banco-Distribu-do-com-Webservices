@@ -1,7 +1,10 @@
-from flask import Flask, abort
+from threading import local
+from flask import Flask, abort, request
 from datetime import datetime
 import urllib.request
 import json
+import sys
+import socket
 
 app = Flask(__name__)
 
@@ -9,44 +12,82 @@ app = Flask(__name__)
 numero_operacao = 1
 
 # constantes
-DATA_SERVER_URL = "http://localhost:5000"
-IP = "1"
+LOCKED_ACCOUNT = -1
+INVALID_ACCOUNT = -2
+INVALID_VALUE = -3
+NOT_FOUND = -4
+TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "4723",
+          "a061", "1aac", "4396", "8ace", "8d69"]
 
 
-def log(args = []):
-    logfile = open("business_server.log", "a")
+def log(args):
+    logfile = open("business_server.log", "+a")
     now = datetime.now().strftime("%m/%d/%Y %T")
     global numero_operacao
-    logfile.write(", ".join([now, str(numero_operacao), IP] + args) + "\n")
+    for i in range(len(args)):
+        args[i] = str(args[i])
+    logfile.write(", ".join([now, str(numero_operacao), ip()] + args) + "\n")
     numero_operacao += 1
     logfile.close()
+
+
+def check_token(request):
+    if 'token' in request.headers and request.headers['token'] in TOKENS:
+        response = do_request(request.headers['token'], "/autentica", {"id_negoc": ip()})
+        if not response.status == 200:
+            abort(401)
+    else:
+        abort(401)
+
+
+def ip():
+    global port
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    return local_ip + ":" + port
+
+
+def get_token(request):
+    return request.headers['token']
 
 
 def has_error(response):
     return "error_code" in response
 
 
-def lock_account(account):
-    query_string = urllib.parse.urlencode({"id_negoc": IP, "conta": account})
-    response = urllib.request.urlopen(DATA_SERVER_URL + "/getLock" + "?" + query_string)
+def check_errors(response):
+    if has_error(response):
+        if response["error_code"] == NOT_FOUND:
+            abort(404)
+        else:
+            abort(403)
+
+
+def do_request(token, endpoint, query = {}):
+    global data_server_url
+    url = data_server_url + endpoint + "?" + urllib.parse.urlencode(query)
+    req = urllib.request.Request(url)
+    req.add_header("token", token)
+    return urllib.request.urlopen(req)
+
+
+def lock_account(token, account):
+    response = do_request(token, "/getLock", {"id_negoc": ip(), "conta": account})
     return json.loads(response.read())
 
 
-def unlock_account(account):
-    query_string = urllib.parse.urlencode({"id_negoc": IP, "conta": account})
-    urllib.request.urlopen(DATA_SERVER_URL + "/unLock" + "?" + query_string)
+def unlock_account(token, account):
+    do_request(token, "/unLock", {"id_negoc": ip(), "conta": account})
 
 
-def get_saldo(account):
-    query_string = urllib.parse.urlencode({"id_negoc": IP, "conta": account})
-    response = urllib.request.urlopen(DATA_SERVER_URL + "/getSaldo" + "?" + query_string)
+def get_saldo(token, account):
+    response = do_request(token, "/getSaldo", {"id_negoc": ip(), "conta": account})
     data = json.loads(response.read())
     return int(data["saldo"])
 
 
-def set_saldo(account, saldo):
-    query_string = urllib.parse.urlencode({"id_negoc": IP, "conta": account, "valor": saldo})
-    urllib.request.urlopen(DATA_SERVER_URL + "/setSaldo" + "?" + query_string)
+def set_saldo(token, account, saldo):
+    do_request(token, "/setSaldo", {"id_negoc": ip(), "conta": account, "valor": saldo})
 
 
 @app.route("/status")
@@ -56,57 +97,64 @@ def status():
 
 @app.route("/deposito/<int:acnt>/<int:amt>")
 def deposito(acnt, amt):
-    response = lock_account(acnt)
-    if has_error(response):
-        abort(403)
-    saldo = get_saldo(acnt)
-    set_saldo(acnt, saldo + amt)
-    unlock_account(acnt)
-    log(["deposito", str(acnt), str(amt)])
+    check_token(request)
+    token = get_token(request)
+    response = lock_account(token, acnt)
+    check_errors(response)
+    saldo = get_saldo(token, acnt)
+    set_saldo(token, acnt, saldo + amt)
+    unlock_account(token, acnt)
+    log(["deposito", acnt, amt])
     return {}
 
 
 @app.route("/saque/<int:acnt>/<int:amt>")
 def saque(acnt, amt):
-    response = lock_account(acnt)
-    if has_error(response):
-        abort(403)
-    saldo = get_saldo(acnt)
-    set_saldo(acnt, saldo - amt)
-    unlock_account(acnt)
-    log(["saque", str(acnt), str(amt)])
+    check_token(request)
+    token = get_token(request)
+    response = lock_account(token, acnt)
+    check_errors(response)
+    saldo = get_saldo(token, acnt)
+    set_saldo(token, acnt, saldo - amt)
+    unlock_account(token, acnt)
+    log(["saque", acnt, amt])
     return {}
 
 
 @app.route("/saldo/<int:acnt>")
 def saldo(acnt):
-    response = lock_account(acnt)
-    if has_error(response):
-        abort(403)
-    saldo = get_saldo(acnt)
-    unlock_account(acnt)
-    log(["saldo", str(acnt)])
+    check_token(request)
+    token = get_token(request)
+    response = lock_account(token, acnt)
+    check_errors(response)
+    saldo = get_saldo(token, acnt)
+    unlock_account(token, acnt)
+    log(["saldo", acnt])
     return {"saldo": saldo}
 
 
 @app.route("/transferencia/<int:acnt_orig>/<int:acnt_dest>/<int:amt>")
 def transferencia(acnt_orig, acnt_dest, amt):
-    response = lock_account(acnt_orig)
+    check_token(request)
+    token = get_token(request)
+    response = lock_account(token, acnt_orig)
+    check_errors(response)
+    response = lock_account(token, acnt_dest)
     if has_error(response):
+        unlock_account(token, acnt_orig)
         abort(403)
-    response = lock_account(acnt_dest)
-    if has_error(response):
-        unlock_account(acnt_orig)
-        abort(403)
-    saldo = get_saldo(acnt_orig)
-    set_saldo(acnt_orig, saldo - amt)
-    saldo = get_saldo(acnt_dest)
-    set_saldo(acnt_dest, saldo + amt)
-    unlock_account(acnt_orig)
-    unlock_account(acnt_dest)
-    log(["transferencia", str(acnt_orig), str(acnt_dest), str(amt)])
+    saldo = get_saldo(token, acnt_orig)
+    set_saldo(token, acnt_orig, saldo - amt)
+    saldo = get_saldo(token, acnt_dest)
+    set_saldo(token, acnt_dest, saldo + amt)
+    unlock_account(token, acnt_orig)
+    unlock_account(token, acnt_dest)
+    log(["transferencia", acnt_orig, acnt_dest, amt])
     return {}
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    global data_server_url, port
+    data_server_url = sys.argv[1]
+    port = sys.argv[2] if len(sys.argv) > 2 else 5000
+    app.run(host="0.0.0.0", port=port, debug=True)
