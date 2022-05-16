@@ -1,185 +1,63 @@
-from telnetlib import AUTHENTICATION
 import urllib.request
 import json
 
-AUTHENTICATION_SERVER_URL = "http://localhost:5000/autentica"
-BUSINESS_SERVER_URL = "http://localhost:5001"
-TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "4723",
-          "a061", "1aac", "4396", "8ace", "8d69"]
+
+class ClientErr:
+    def __init__(self, status):
+        self.status = status
+
+    def status(self):
+        return self.status
+
+    def read(self):
+        return "{}"
 
 
-def request(segments):
-    for i in range(len(segments)):
-        segments[i] = str(segments[i])
-    url = "/".join([BUSINESS_SERVER_URL] + segments)
-    req = urllib.request.Request(url)
-    req.add_header("token", TOKENS[0])
-    response = urllib.request.urlopen(req)
-    return json.loads(response.read())
+class Client:
+    # o 11o. elemento eh um token invalido
+    tokens = ["ba0f", "4c0e", "a5fc", "b317", "4723",
+              "a061", "1aac", "4396", "8ace", "8d69",
+              "__INVALID__"]
 
+    def __init__(self, server_address, authentication_server, token=0):
+        self.server_address = server_address
+        self.authentication_server = authentication_server
+        self.token = token if token < len(self.tokens) else len(self.tokens) - 1
 
-def autentica():
-    global authentication_server
-    authentication_server = AUTHENTICATION_SERVER_URL
-    req = urllib.request.Request(authentication_server)
-    req.add_header("token", TOKENS[0])
-    response = urllib.request.urlopen(req)
-    return response.code == 200
+    def __str__(self):
+        return (f"server_address: {self.server_address} "
+                f" authentication_server: {self.authentication_server} "
+                f" token: {self.tokens[self.token]}")
 
+    def __do_request(self, url):
+        request = urllib.request.Request(url)
+        request.add_header("token", self.tokens[self.token])
+        try:
+            return urllib.request.urlopen(request)
+        except urllib.error.HTTPError as err:
+            return ClientErr(err.status)
 
-def deposito(acnt, amt):
-    if autentica():
-        return request(["deposito", acnt, amt])
-    else:
-        print("falha de autenticacao")
+    def __auth(self):
+        return self.__do_request(self.authentication_server)
 
+    def __url_for(self, url_segments):
+        for i in range(len(url_segments)):
+            url_segments[i] = str(url_segments[i])
+        return "/".join([self.server_address] + url_segments)
 
-def saque(acnt, amt):
-    if autentica():
-        return request(["saque", acnt, amt])
-    else:
-        print("falha de autenticacao")
+    def __execute(self, url_segments):
+        url = self.__url_for(url_segments)
+        response = self.__do_request(url)
+        return str(json.loads(response.read())) + ", status: " + str(response.status)
 
+    def deposito(self, acnt, amt):
+        return self.__auth() and self.__execute(["deposito", acnt, amt])
 
-def saldo(acnt):
-    if autentica():
-        return request(["saldo", acnt])
-    else:
-        print("falha de autenticacao")
+    def saque(self, acnt, amt):
+        return self.__auth() and self.__execute(["saque", acnt, amt])
 
+    def saldo(self, acnt):
+        return self.__auth() and self.__execute(["saldo", acnt])
 
-def transferencia(acnt_orig, acnt_dest, amt):
-    if autentica():
-        return request(["transferencia", acnt_orig, acnt_dest, amt])
-    else:
-        print("falha de autenticacao")
-
-
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
-print(deposito(2, 5000))
-print(saldo(1))
-print(saque(1, 500))
-print(deposito(1, 4500))
-print(saldo(1))
-print(transferencia(1, 2, 1000))
-print(saldo(1))
-print(saldo(2))
+    def transferencia(self, acnt_orig, acnt_dest, amt):
+        return self.__auth() and self.__execute(["transferencia", acnt_orig, acnt_dest, amt])
