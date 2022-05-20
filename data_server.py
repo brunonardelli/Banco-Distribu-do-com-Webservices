@@ -1,4 +1,3 @@
-from http.client import NOT_FOUND
 from flask import Flask, request, jsonify, abort
 from datetime import datetime
 
@@ -24,8 +23,8 @@ LOCKED_ACCOUNT = -1
 INVALID_ACCOUNT = -2
 INVALID_VALUE = -3
 NOT_FOUND = -4
-TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "4723",
-          "a061", "1aac", "4396", "8ace", "8d69"]
+TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
+          "a061", "1aac", "8w9k", "8ace", "8d69"]
 
 
 def log(args):
@@ -39,15 +38,19 @@ def log(args):
     logfile.close()
 
 
-def check_token(request):
+def validate_token(request):
     return 'token' in request.headers and request.headers['token'] in TOKENS
 
 
-def validate_transaction(conta, id_negoc):
+def validate_account(conta):
     if conta == INVALID_ACCOUNT:
         return INVALID_ACCOUNT
     if not conta in contas:
         return NOT_FOUND
+    return 0
+
+
+def validate_write_mode(conta, id_negoc):
     if contas[conta]["locked"] and contas[conta]["locked_by"] != id_negoc:
         return LOCKED_ACCOUNT
     return 0
@@ -67,19 +70,14 @@ def get_valor(request):
 
 @app.route("/status")
 def status():
+    '''for DEBUG: check server health'''
     return "data_server is up and running"
-
-
-@app.route("/inspect")
-def inspect():
-    conta = get_conta(request)
-    return jsonify(contas[conta])
 
 
 @app.route("/autentica")
 def autentica():
     id_negoc = get_id_negoc(request)
-    if check_token(request):
+    if validate_token(request):
         log([id_negoc, "autentica", True])
         return {}
     else:
@@ -89,62 +87,102 @@ def autentica():
 
 @app.route("/getSaldo")
 def getSaldo():
-    if not check_token(request):
+    # verifica se o token eh valido
+    if not validate_token(request):
         abort(401)
+
     id_negoc = get_id_negoc(request)
     conta = get_conta(request)
-    invalid_transaction = validate_transaction(conta, id_negoc)
-    # todo: consultar saldo de conta bloqueada
-    if invalid_transaction:
-        return {"error_code": invalid_transaction}
+
+    # verifica se a conta eh uma conta valida
+    invalid_account = validate_account(conta)
+    if invalid_account:
+        return {"error_code": invalid_account}
+
     saldo = contas[conta]["saldo"]
+
     log([id_negoc, "getSaldo", conta, saldo])
     return {"saldo": saldo}
 
 
 @app.route("/setSaldo")
 def setSaldo():
-    if not check_token(request):
+    # verifica se o token eh valido
+    if not validate_token(request):
         abort(401)
+
     id_negoc = get_id_negoc(request)
     conta = get_conta(request)
-    invalid_transaction = validate_transaction(conta, id_negoc)
-    if invalid_transaction:
-        return {"error_code": invalid_transaction}
+
+    # verifica se a conta eh uma conta valida
+    invalid_account = validate_account(conta)
+    if invalid_account:
+        return {"error_code": invalid_account}
+
+    # verifica se a conta esta liberada para escrita
+    locked_account = validate_write_mode(conta, id_negoc)
+    if locked_account:
+        return {"error_code": locked_account}
+
+    # verifica se o valor recebido eh valido
     valor = get_valor(request)
     if valor == None:
         return {"error_code": INVALID_VALUE}
+
     contas[conta]["saldo"] = int(valor)
+
     log([id_negoc, "setSaldo", conta, valor])
     return {}
 
 
 @app.route("/getLock")
 def getLock():
-    if not check_token(request):
+    # verifica se o token eh valido
+    if not validate_token(request):
         abort(401)
+
     id_negoc = get_id_negoc(request)
     conta = get_conta(request)
-    invalid_transaction = validate_transaction(conta, id_negoc)
-    if invalid_transaction:
-        return {"error_code": invalid_transaction}
+
+    # verifica se a conta eh uma conta valida
+    invalid_account = validate_account(conta)
+    if invalid_account:
+        return {"error_code": invalid_account}
+
+    # verifica se a conta esta liberada para escrita
+    locked_account = validate_write_mode(conta, id_negoc)
+    if locked_account:
+        return {"error_code": locked_account}
+
     contas[conta]["locked"] = True
     contas[conta]["locked_by"] = id_negoc
+
     log([id_negoc, "getLock", conta])
     return {}
 
 
 @app.route("/unLock")
 def unLock():
-    if not check_token(request):
+    # verifica se o token eh valido
+    if not validate_token(request):
         abort(401)
+
     id_negoc = get_id_negoc(request)
     conta = get_conta(request)
-    invalid_transaction = validate_transaction(conta, id_negoc)
-    if invalid_transaction:
-        return {"error_code": invalid_transaction}
+
+    # verifica se a conta eh uma conta valida
+    invalid_account = validate_account(conta)
+    if invalid_account:
+        return {"error_code": invalid_account}
+
+    # verifica se a conta esta liberada para escrita
+    locked_account = validate_write_mode(conta, id_negoc)
+    if locked_account:
+        return {"error_code": locked_account}
+
     contas[conta]["locked"] = False
     contas[conta]["locked_by"] = None
+
     log([id_negoc, "unLock", conta])
     return {}
 

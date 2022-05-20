@@ -1,4 +1,3 @@
-from threading import local
 from flask import Flask, abort, request
 from datetime import datetime
 import urllib.request
@@ -16,8 +15,8 @@ LOCKED_ACCOUNT = -1
 INVALID_ACCOUNT = -2
 INVALID_VALUE = -3
 NOT_FOUND = -4
-TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "4723",
-          "a061", "1aac", "4396", "8ace", "8d69"]
+TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
+          "a061", "1aac", "8w9k", "8ace", "8d69"]
 
 
 def log(args):
@@ -65,7 +64,9 @@ def check_errors(response):
 
 def do_request(token, endpoint, query = {}):
     global data_server_url
+    # concatena a url do servidor de dados com o endpoint e a query
     url = data_server_url + endpoint + "?" + urllib.parse.urlencode(query)
+    # adiciona o token no header de todas as requisicoes
     req = urllib.request.Request(url)
     req.add_header("token", token)
     return urllib.request.urlopen(req)
@@ -92,6 +93,7 @@ def set_saldo(token, account, saldo):
 
 @app.route("/status")
 def status():
+    '''for DEBUG: check server health'''
     return "business_server is up and running"
 
 
@@ -104,6 +106,7 @@ def deposito(acnt, amt):
     saldo = get_saldo(token, acnt)
     set_saldo(token, acnt, saldo + amt)
     unlock_account(token, acnt)
+
     log(["deposito", acnt, amt])
     return {}
 
@@ -117,6 +120,7 @@ def saque(acnt, amt):
     saldo = get_saldo(token, acnt)
     set_saldo(token, acnt, saldo - amt)
     unlock_account(token, acnt)
+
     log(["saque", acnt, amt])
     return {}
 
@@ -129,6 +133,7 @@ def saldo(acnt):
     check_errors(response)
     saldo = get_saldo(token, acnt)
     unlock_account(token, acnt)
+
     log(["saldo", acnt])
     return {"saldo": saldo}
 
@@ -140,15 +145,19 @@ def transferencia(acnt_orig, acnt_dest, amt):
     response = lock_account(token, acnt_orig)
     check_errors(response)
     response = lock_account(token, acnt_dest)
+
+    # aborta caso a conta de destino esteja bloqueada
     if has_error(response):
         unlock_account(token, acnt_orig)
         abort(403)
+
     saldo = get_saldo(token, acnt_orig)
     set_saldo(token, acnt_orig, saldo - amt)
     saldo = get_saldo(token, acnt_dest)
     set_saldo(token, acnt_dest, saldo + amt)
     unlock_account(token, acnt_orig)
     unlock_account(token, acnt_dest)
+
     log(["transferencia", acnt_orig, acnt_dest, amt])
     return {}
 

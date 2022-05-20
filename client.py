@@ -14,24 +14,19 @@ class ClientErr:
 
 
 class Client:
-    # o 11o. elemento eh um token invalido
-    tokens = ["ba0f", "4c0e", "a5fc", "b317", "4723",
-              "a061", "1aac", "4396", "8ace", "8d69",
-              "__INVALID__"]
-
-    def __init__(self, server_address, authentication_server, token=0):
+    def __init__(self, server_address, authentication_server, token="ba0f"):
         self.server_address = server_address
         self.authentication_server = authentication_server
-        self.token = token if token < len(self.tokens) else len(self.tokens) - 1
+        self.token = token
 
     def __str__(self):
         return (f"server_address: {self.server_address} "
                 f" authentication_server: {self.authentication_server} "
-                f" token: {self.tokens[self.token]}")
+                f" token: {self.token}")
 
     def __do_request(self, url):
         request = urllib.request.Request(url)
-        request.add_header("token", self.tokens[self.token])
+        request.add_header("token", self.token)
         try:
             return urllib.request.urlopen(request)
         except urllib.error.HTTPError as err:
@@ -48,7 +43,7 @@ class Client:
     def __execute(self, url_segments):
         url = self.__url_for(url_segments)
         response = self.__do_request(url)
-        return str(json.loads(response.read())) + ", status: " + str(response.status)
+        return "body: " + str(json.loads(response.read())) + ", status: " + str(response.status)
 
     def deposito(self, acnt, amt):
         return self.__auth() and self.__execute(["deposito", acnt, amt])
