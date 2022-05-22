@@ -16,6 +16,16 @@ Todo o log das operações executadas pelo servidor de dados são salvas no arqu
 ```
 TIMESTAMP, NUMERO OPERACAO, ID_NEGOC, OPERACAO, *PARAMETROS DA OPERAÇÃO
 ```
+Rotas
+| endpoint     | método | headers | query string           | descrição                                                     |
+|--------------|:------:|---------|------------------------| --------------------------------------------------------------|
+| `/status`    | `GET`  |         |                        | verifica status do servidor                                   |
+| `/autentica` | `GET`  | token   | id_negoc               | autentica o token informado                                   |
+| `/getSaldo`  | `GET`  | token   | id_negoc, conta        | retorna o saldo da conta informada                            |
+| `/setSaldo`  | `GET`  | token   | id_negoc, conta, valor | atualiza o saldo com o valor informado                        |
+| `/getLock`   | `GET`  | token   | id_negoc, conta        | bloqueia a conta para escrita de outros servidores de negócio |
+| `/setLock`   | `GET`  | token   | id_negoc, conta        | libera a conta para escrita de outros servidores de negócio   |
+
 
 ---
 
@@ -29,6 +39,15 @@ Todo o log das operações executadas pelo servidor de negócio são salvas no a
 ```
 TIMESTAMP, NUMERO OPERACAO, ID_NEGOC, OPERACAO, *PARAMETROS DA OPERAÇÃO
 ```
+
+Rotas
+| endpoint                                           | método | headers | descrição                                                                              |
+|----------------------------------------------------|:------:|---------|----------------------------------------------------------------------------------------|
+| `/status`                                          | `GET`  |         | verifica status do servidor                                                            |
+| `/deposito/<conta>/<valor>`                        | `GET`  | token   | faz um deposito de `<valor>` na conta `<conta>`                                        |
+| `/saque/<conta>/<valor>`                           | `GET`  | token   | faz um saque de `<valor>` na conta `<conta>`                                           |
+| `/saldo/<conta>`                                   | `GET`  | token   | consulta o saldo da `<conta>`                                                          |
+| `/transferencia/<conta_orig>/<conta_dest>/<valor>` | `GET`  | token   | faz uma transferência de `<valor>` da conta `<conta_orig>` para a conta `<conta_dest>` |
 
 ---
 
