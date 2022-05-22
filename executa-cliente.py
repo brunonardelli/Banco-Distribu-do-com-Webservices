@@ -1,3 +1,13 @@
+"""
+DESENVOLVIDO POR:
+NOME: Breno F Pinho        - TIA: 41932110
+NOME: Bruno N Santiago     - TIA: 41933613
+NOME: Guilherme B Pereira  - TIA: 32060785
+
+DISCIPLINA: Computação distribuída
+TURMA: 6N
+"""
+
 from client import Client
 from random import seed, randint
 
@@ -9,10 +19,10 @@ VALID_TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
 NUM_CONTAS = 10
 
 # endereco dos servidores de negocio
-BUSINESS_SERVERS = ["http://20.226.20.175:5000", "http://20.226.19.161:5000", "http://20.226.17.255:5000"]
+BUSINESS_SERVERS = ["http://localhost:5001", "http://localhost:5002", "http://localhost:5003"]
 
 # endereco de autenticacao
-AUTHENTICATION_URL = "http://20.226.19.87:5000/autentica"
+AUTHENTICATION_URL = "http://localhost:5000/autentica"
 
 seed()
 

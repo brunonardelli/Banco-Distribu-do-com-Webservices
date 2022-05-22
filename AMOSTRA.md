@@ -1,3 +1,16 @@
+# Desenvolvido por
+- Breno F Pinho - TIA: 41932110
+- Bruno N Santiago - TIA: 41933613
+- Guilherme B Pereira - TIA: 32060785
+
+DISCIPLINA: Computação distribuída
+
+TURMA: 6N
+
+
+---
+
+
 # Demonstração
 O código abaixo é usado para executar um script que inicializa um Cliente, realiza algumas operações e exibe o retorno delas na tela.
 

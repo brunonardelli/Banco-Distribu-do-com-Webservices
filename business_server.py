@@ -1,3 +1,13 @@
+"""
+DESENVOLVIDO POR:
+NOME: Breno F Pinho        - TIA: 41932110
+NOME: Bruno N Santiago     - TIA: 41933613
+NOME: Guilherme B Pereira  - TIA: 32060785
+
+DISCIPLINA: Computação distribuída
+TURMA: 6N
+"""
+
 from flask import Flask, abort, request
 from datetime import datetime
 import urllib.request

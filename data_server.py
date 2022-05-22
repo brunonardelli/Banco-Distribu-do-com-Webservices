@@ -1,3 +1,13 @@
+"""
+DESENVOLVIDO POR:
+NOME: Breno F Pinho        - TIA: 41932110
+NOME: Bruno N Santiago     - TIA: 41933613
+NOME: Guilherme B Pereira  - TIA: 32060785
+
+DISCIPLINA: Computação distribuída
+TURMA: 6N
+"""
+
 from flask import Flask, request, jsonify, abort
 from datetime import datetime
 
@@ -28,7 +38,7 @@ TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
 
 
 def log(args):
-    logfile = open("data_server.log", "+a")
+    logfile = open("data_server2.log", "+a")
     now = datetime.now().strftime("%m/%d/%Y %T")
     global numero_operacao
     for i in range(len(args)):
