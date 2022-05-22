@@ -1,50 +1,52 @@
-from client import *
+from client import Client
+from random import seed, randint
 
+# tokens validos
 VALID_TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
                 "a061", "1aac", "8w9k", "8ace", "8d69"]
 
+# quantidade de contas no servidor de dados
+NUM_CONTAS = 10
+
+# endereco dos servidores de negocio
+BUSINESS_SERVERS = ["http://localhost:5001", "http://localhost:5002", "http://localhost:5003"]
+
+# endereco de autenticacao
+AUTHENTICATION_URL = "http://localhost:5000/autentica"
+
+seed()
+
 tokens = VALID_TOKENS + ["__INVALID__"]
 
-args = ["http://localhost:5001", "http://localhost:5000/autentica", tokens[4]]
-cliente = Client(*args)
-print("client  ->  " + str(cliente))
-print("    deposito(2, 5000)  ->  " + cliente.deposito(2, 5000))
-print("    transferencia(2, 1, 2000)  ->  " + cliente.transferencia(2, 1, 2000))
-print("    saldo(20)  ->  " + cliente.saldo(20))
-print("    saque(1, 1000)  ->  " + cliente.saque(1, 1000))
-print("    saldo(1)  ->  " + cliente.saldo(1))
-print("    saldo(2)  ->  " + cliente.saldo(2))
-print("")
+for i in range(25):
+  args = [
+    # seleciona um servidor do array "BUSINESS_SERVERS" de forma aleatoria
+    BUSINESS_SERVERS[randint(0, len(BUSINESS_SERVERS)-1)],
+    AUTHENTICATION_URL,
+    # seleciona um token do array "tokens" de forma aleatoria
+    tokens[randint(0, len(tokens)-1)]
+  ]
 
-args = ["http://localhost:5001", "http://localhost:5000/autentica", tokens[5]]
-cliente = Client(*args)
-print("client  ->  " + str(cliente))
-print("    deposito(2, 5000)  ->  " + cliente.deposito(2, 5000))
-print("    transferencia(2, 1, 2000)  ->  " + cliente.transferencia(2, 1, 2000))
-print("    saldo(20)  ->  " + cliente.saldo(20))
-print("    saque(1, 1000)  ->  " + cliente.saque(1, 1000))
-print("    saldo(1)  ->  " + cliente.saldo(1))
-print("    saldo(2)  ->  " + cliente.saldo(2))
-print("")
+  # contas aleatorias para as operacoes
+  contas = [
+    randint(0, NUM_CONTAS),
+    randint(0, NUM_CONTAS),
+    randint(0, NUM_CONTAS),
+    randint(0, NUM_CONTAS)]
 
-args = ["http://localhost:5001", "http://localhost:5000/autentica", tokens[10]]
-cliente = Client(*args)
-print("client  ->  " + str(cliente))
-print("    deposito(2, 5000)  ->  " + cliente.deposito(2, 5000))
-print("    transferencia(2, 1, 2000)  ->  " + cliente.transferencia(2, 1, 2000))
-print("    saldo(20)  ->  " + cliente.saldo(20))
-print("    saque(1, 1000)  ->  " + cliente.saque(1, 1000))
-print("    saldo(1)  ->  " + cliente.saldo(1))
-print("    saldo(2)  ->  " + cliente.saldo(2))
-print("")
+  # inicializa o cliente com os argumentos aleatorios
+  client = Client(*args)
 
-args = ["http://localhost:5001", "http://localhost:5000/autentica"]
-cliente = Client(*args)
-print("client  ->  " + str(cliente))
-print("    deposito(2, 5000)  ->  " + cliente.deposito(2, 5000))
-print("    transferencia(2, 1, 2000)  ->  " + cliente.transferencia(2, 1, 2000))
-print("    saldo(20)  ->  " + cliente.saldo(20))
-print("    saque(1, 1000)  ->  " + cliente.saque(1, 1000))
-print("    saldo(1)  ->  " + cliente.saldo(1))
-print("    saldo(2)  ->  " + cliente.saldo(2))
-print("")
+  print(f"client  ->  {str(client)}")
+  # realiza as operacoes e imprime o retorno
+  print(f"    saque({str(contas[0])}, 500)  ->  {client.saque(contas[0], 500)}")
+  print(f"    deposito({str(contas[2])}, 5000)  ->  {client.deposito(contas[2], 5000)}")
+  print(f"    transferencia({str(contas[2])}, {str(contas[1])}, 2000)  ->  {client.transferencia(contas[2], contas[1], 2000)}")
+  print(f"    saque({str(contas[3])}, 1000)  ->  {client.saque(contas[3], 1000)}")
+  # consulta o saldo e imprime o retorno
+  print(f"    saldo({str(contas[0])})  ->  {client.saldo(contas[0])}")
+  print(f"    saldo({str(contas[1])})  ->  {client.saldo(contas[1])}")
+  print(f"    saldo({str(contas[2])})  ->  {client.saldo(contas[2])}")
+  print(f"    saldo({str(contas[3])})  ->  {client.saldo(contas[3])}")
+
+  print("")
