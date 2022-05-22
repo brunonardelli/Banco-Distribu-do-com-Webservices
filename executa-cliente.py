@@ -9,16 +9,16 @@ VALID_TOKENS = ["ba0f", "4c0e", "a5fc", "b317", "6t2q",
 NUM_CONTAS = 10
 
 # endereco dos servidores de negocio
-BUSINESS_SERVERS = ["http://localhost:5001", "http://localhost:5002", "http://localhost:5003"]
+BUSINESS_SERVERS = ["http://20.226.20.175:5000", "http://20.226.19.161:5000", "http://20.226.17.255:5000"]
 
 # endereco de autenticacao
-AUTHENTICATION_URL = "http://localhost:5000/autentica"
+AUTHENTICATION_URL = "http://20.226.19.87:5000/autentica"
 
 seed()
 
 tokens = VALID_TOKENS + ["__INVALID__"]
 
-for i in range(25):
+for i in range(10):
   args = [
     # seleciona um servidor do array "BUSINESS_SERVERS" de forma aleatoria
     BUSINESS_SERVERS[randint(0, len(BUSINESS_SERVERS)-1)],

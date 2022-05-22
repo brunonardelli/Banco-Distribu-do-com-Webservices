@@ -25,7 +25,7 @@ def log(args):
     global numero_operacao
     for i in range(len(args)):
         args[i] = str(args[i])
-    logfile.write(", ".join([now, str(numero_operacao), ip()] + args) + "\n")
+    logfile.write(", ".join([now, str(numero_operacao)] + args) + "\n")
     numero_operacao += 1
     logfile.close()
 
@@ -43,7 +43,7 @@ def ip():
     global port
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
-    return local_ip + ":" + port
+    return str(local_ip) + ":" + str(port)
 
 
 def get_token(request):
@@ -107,7 +107,7 @@ def deposito(acnt, amt):
     set_saldo(token, acnt, saldo + amt)
     unlock_account(token, acnt)
 
-    log(["deposito", acnt, amt])
+    log([request.remote_addr, "deposito", acnt, amt])
     return {}
 
 
@@ -121,7 +121,7 @@ def saque(acnt, amt):
     set_saldo(token, acnt, saldo - amt)
     unlock_account(token, acnt)
 
-    log(["saque", acnt, amt])
+    log([request.remote_addr, "saque", acnt, amt])
     return {}
 
 
@@ -134,7 +134,7 @@ def saldo(acnt):
     saldo = get_saldo(token, acnt)
     unlock_account(token, acnt)
 
-    log(["saldo", acnt])
+    log([request.remote_addr, "saldo", acnt])
     return {"saldo": saldo}
 
 
@@ -158,7 +158,7 @@ def transferencia(acnt_orig, acnt_dest, amt):
     unlock_account(token, acnt_orig)
     unlock_account(token, acnt_dest)
 
-    log(["transferencia", acnt_orig, acnt_dest, amt])
+    log([request.remote_addr, "transferencia", acnt_orig, acnt_dest, amt])
     return {}
 
 
